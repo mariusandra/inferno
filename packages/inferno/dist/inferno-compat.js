@@ -601,27 +601,6 @@ function cloneVNode(vNodeToClone, props) {
     newVNode.dom = null;
     return newVNode;
 }
-// 	if (flags & VNodeFlags.Component) {
-// 		const newProps = newVNode.props;
-// 		// we need to also clone component children that are in props
-// 		// as the children may also have been hoisted
-// 		if (newProps && newProps.children) {
-// 			const newChildren = newProps.children;
-// 			if (isArray(newChildren)) {
-// 				for (let i = 0; i < newChildren.length; i++) {
-// 					if (!isInvalid(newChildren[i]) && isVNode(newChildren[i])) {
-// 						newProps.children[i] = cloneVNode(newChildren[i]);
-// 					}
-// 				}
-// 			} else if (!isInvalid(newChildren) && isVNode(newChildren)) {
-// 				newProps.children = cloneVNode(newChildren);
-// 			}
-// 		}
-// 		newVNode.children = null;
-// 	}
-// 	newVNode.dom = null;
-// 	return newVNode;
-// }
 
 function _normalizeVNodes(nodes, result, i) {
     for (; i < nodes.length; i++) {
@@ -2661,8 +2640,22 @@ function hydrateRoot(input, parentDom, lifecycle) {
 // in performance is huge: https://esbench.com/bench/5802a691330ab09900a1a2da
 var roots = [];
 var componentToDOMNodeMap = new Map();
+function isElement(obj) {
+    try {
+        //Using W3 DOM2 (works for FF, Opera and Chrom)
+        return obj instanceof HTMLElement;
+    }
+    catch (e) {
+        //Browsers not supporting W3 DOM2 don't have HTMLElement and
+        //an exception is thrown and we end up here. Testing some
+        //properties that all elements have. (works on IE7)
+        return (typeof obj === "object") &&
+            (obj.nodeType === 1) && (typeof obj.style === "object") &&
+            (typeof obj.ownerDocument === "object");
+    }
+}
 function findDOMNode(domNode) {
-    return componentToDOMNodeMap.get(domNode) || null;
+    return componentToDOMNodeMap.get(domNode) || (isElement(domNode) ? domNode : null);
 }
 function getRoot(dom) {
     for (var i = 0; i < roots.length; i++) {
